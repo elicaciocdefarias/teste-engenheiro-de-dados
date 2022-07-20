@@ -53,5 +53,7 @@ services:
       MYSQL_USER: microdados
       MYSQL_PASSWORD: microdados 
       MYSQL_ROOT_PASSWORD: microdados
+    ports:
+      - 3306:3306
     volumes:
       - db-volume:/var/lib/mysql
