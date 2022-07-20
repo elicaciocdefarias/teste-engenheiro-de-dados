@@ -7,6 +7,9 @@ ENV SPARK_MASTER_PORT 7077
 ENV PYSPARK_PYTHON python3
 
 USER root
+
+COPY ./work-dir/mysql-connector-java-8.0.29.jar /opt/spark/jars/
+
 RUN mkdir ${SPARK_HOME}/logs
 
 EXPOSE ${spark_master_web_ui} ${SPARK_MASTER_PORT}

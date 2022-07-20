@@ -5,7 +5,8 @@ spark = (
     SparkSession
     .builder
     .appName('my spark cluster')
-    .master('spark://127.0.0.1:7077')
+    .master('spark://spark-master:7077')
+    .config("spark.driver.extraClassPath", "./work-dir/mysql-connector-java-8.0.29.jar")
     .getOrCreate()
 )
 
@@ -19,7 +20,7 @@ df = (
     .csv('./work-dir/MICRODADOS_ENEM_2020.csv')
 )
 
-# extrai 
+# colunas uteis
 columns = [
     "NU_INSCRICAO",
     "TP_PRESENCA_CN",
