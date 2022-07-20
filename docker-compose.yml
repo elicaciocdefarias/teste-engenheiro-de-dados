@@ -1,4 +1,8 @@
 version: "3.9"
+
+volumes:
+    db-volume:
+
 services:
   spark-master:
     build:
@@ -44,9 +48,10 @@ services:
       - spark-master
   db:
     image: mysql
-    # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
-    # (this is just an example, not intended to be a production configuration)
-    command: --default-authentication-plugin=mysql_native_password
-    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: my_passwork@123
+      MYSQL_DATABASE: microdados 
+      MYSQL_USER: microdados
+      MYSQL_PASSWORD: microdados 
+      MYSQL_ROOT_PASSWORD: microdados
+    volumes:
+      - db-volume:/var/lib/mysql
