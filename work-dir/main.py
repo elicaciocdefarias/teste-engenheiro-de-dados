@@ -448,6 +448,67 @@ df_dimensao_aluno.show(5)
 df_fato_avaliacao = (
     join_2
     .select(*colunas_avaliacao)
+    .withColumn("ID_TEMPO", lit(1))
 )
 
 df_fato_avaliacao.show(5)
+
+#### carrega os dados nas tabelas
+(
+    df_dimensao_escola
+    .dropna(how="all")
+    .orderBy("ID_ESCOLA")
+    .write
+    .format("jdbc")
+    .option("url", "jdbc:mysql://db/microdados")
+    .option("dbtable", "dimensao_escola")
+	.option("user", "microdados")
+    .option("password", "microdados")
+    .mode("Append")
+    .save()
+)
+
+(
+    df_dimensao_aluno
+    .dropna(how="all")
+    .orderBy("ID_ALUNO")
+    .write
+    .format("jdbc")
+    .option("url", "jdbc:mysql://db/microdados")
+    .option("dbtable", "dimensao_aluno")
+	.option("user", "microdados")
+    .option("password", "microdados")
+    .mode("Append")
+    .save()
+)
+
+(
+    spark.createDataFrame(
+        [
+            ('ID', 1),
+            ('ANO', 2020)
+        ]
+    )
+    .write
+    .format("jdbc")
+    .option("url", "jdbc:mysql://db/microdados")
+    .option("dbtable", "dimensao_tempo")
+	.option("user", "microdados")
+    .option("password", "microdados")
+    .mode("Append")
+    .save()
+)
+
+(
+    df_fato_avaliacao
+    .dropna(how="all")
+    .orderBy("ID_AVALIACAO")
+    .write
+    .format("jdbc")
+    .option("url", "jdbc:mysql://db/microdados")
+    .option("dbtable", "fato_avaliacao")
+	.option("user", "microdados")
+    .option("password", "microdados")
+    .mode("Append")
+    .save()
+)
