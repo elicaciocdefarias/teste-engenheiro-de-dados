@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, udf, monotonically_increasing_id
+from pyspark.sql.functions import col, udf, monotonically_increasing_id, lit
 
 
 # pega uma sessao do spark
@@ -30,6 +30,7 @@ colunas_uteis = [
     "TP_PRESENCA_CH",
     "TP_PRESENCA_LC",
     "TP_PRESENCA_MT",
+    "TP_STATUS_REDACAO",
     "NU_NOTA_CN",
     "NU_NOTA_CH",
     "NU_NOTA_LC",
@@ -222,3 +223,143 @@ df_aluno = (
 )
 
 df_aluno.show(5)
+
+#### avaliacao
+
+# extrai as informacoes das avaliacao
+colunas = [
+    "NU_INSCRICAO",
+    "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT",
+    "TP_STATUS_REDACAO",
+    "NU_NOTA_CN",
+    "NU_NOTA_CH",
+    "NU_NOTA_LC",
+    "NU_NOTA_MT",
+    "NU_NOTA_REDACAO",
+]
+
+df2 = df1.select(*colunas)
+
+# substitui os valor numericos pelas descricoes
+def replace_presenca_avaliacao(value):
+    inner_dict = {
+        0: "Faltou à prova",
+        1: "Presente na prova",
+        2: "Eliminado na prova",
+    }
+    return inner_dict[value]
+
+def replace_presenca_redacao(value):
+    inner_dict = {
+        1 : "Sem problemas",
+        2 : "Anulada",
+        3 : "Cópia Texto Motivador",
+        4 : "Em Branco",
+        6 : "Fuga ao tema",
+        7 : "Não atendimento ao tipo textual",
+        8 : "Texto insuficiente",
+        9 : "Parte desconectada",
+    }
+    return inner_dict.get(value, "Não Informada")
+
+udf_replace_presenca_avaliacao = udf(lambda x: replace_presenca_avaliacao(x))
+udf_replace_presenca_redacao = udf(lambda x: replace_presenca_redacao(x))
+
+df3 = (
+    df2
+    .withColumn(
+        "TP_PRESENCA_CN", 
+        udf_replace_presenca_avaliacao(
+            col("TP_PRESENCA_CN")
+        )
+    )
+    .withColumn(
+        "TP_PRESENCA_CH", 
+        udf_replace_presenca_avaliacao(
+            col("TP_PRESENCA_CH")
+        )
+    )
+    .withColumn(
+        "TP_PRESENCA_LC", 
+        udf_replace_presenca_avaliacao(
+            col("TP_PRESENCA_LC")
+        )
+    )
+    .withColumn(
+        "TP_PRESENCA_MT", 
+        udf_replace_presenca_avaliacao(
+            col("TP_PRESENCA_MT")
+        )
+    )
+    .withColumn(
+        "TP_STATUS_REDACAO", 
+        udf_replace_presenca_redacao(
+            col("TP_STATUS_REDACAO")
+        )
+    )
+)
+
+df_cn = (
+    df3.select(
+        "NU_INSCRICAO",
+        "TP_PRESENCA_CN",
+        "NU_NOTA_CN",
+    )
+    .withColumn("TIPO_AVALIACAO", lit("CN"))
+)
+
+df_ch = (
+    df3.select(
+        "NU_INSCRICAO",
+        "TP_PRESENCA_CH",
+        "NU_NOTA_CH",
+    )
+    .withColumn("TIPO_AVALIACAO", lit("CH"))
+)
+
+df_lc = (
+    df3.select(
+        "NU_INSCRICAO",
+        "TP_PRESENCA_LC",
+        "NU_NOTA_LC",
+    )
+    .withColumn("TIPO_AVALIACAO", lit("LC"))
+)
+
+df_mt = (
+    df3.select(
+        "NU_INSCRICAO",
+        "TP_PRESENCA_MT",
+        "NU_NOTA_MT",
+    )
+    .withColumn("TIPO_AVALIACAO", lit("MT"))
+)
+
+df_rd = (
+    df3.select(
+        "NU_INSCRICAO",
+        "TP_STATUS_REDACAO",
+        "NU_NOTA_REDACAO",
+    )
+    .withColumn("TIPO_AVALIACAO", lit("RD"))
+)
+
+df_cn_ch = df_cn.union(df_ch)
+df_cn_ch_lc = df_cn_ch.union(df_lc)
+df_cn_ch_lc_mt = df_cn_ch_lc.union(df_mt)
+df4 = df_cn_ch_lc_mt.union(df_rd)
+df4 = df4.orderBy("NU_INSCRICAO")
+
+# indexa as linhas
+df5 = df4.withColumn(
+    "ID", monotonically_increasing_id()
+)
+
+df_avaliacao = df5.withColumn(
+    "ID", df5.ID +1
+)
+
+df_avaliacao.show()
