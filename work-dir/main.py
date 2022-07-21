@@ -1,4 +1,6 @@
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, udf, monotonically_increasing_id
+
 
 # pega uma sessao do spark
 spark = (
@@ -55,3 +57,88 @@ colunas = [
     "NU_INSCRICAO",
 ]
 df2 = df1.select(*colunas)
+
+# remove as linhas onde todas as informacoes da escola estao vazias
+# remove as linhas duplicadas
+# ordena pelo codigo do municipio
+# cria um novo dataframe
+colunas_escola = [
+    "CO_MUNICIPIO_ESC",
+    "NO_MUNICIPIO_ESC",
+    "TP_DEPENDENCIA_ADM_ESC",
+    "TP_LOCALIZACAO_ESC",
+    "TP_SIT_FUNC_ESC",   
+]
+
+df3 = (
+    df2
+    .dropna(
+        how="all", 
+        subset=colunas_escola
+    )
+    .distinct()
+    .orderBy("CO_MUNICIPIO_ESC")
+)
+
+# indexa as linhas
+df4 = df3.withColumn(
+    "ID", monotonically_increasing_id()
+)
+
+df5 = df4.withColumn(
+    "ID", df4.ID +1
+)
+
+# substitui os valor numericos pelas descricoes
+def replace_tp_dependencia_adm_esc(value):
+    inner_dict = {
+        1 : "Federal",
+        2 : "Estadual",
+        3 : "Municipal",
+        4 : "Privada",
+    }
+    return inner_dict[value]
+
+def replace_tp_localizacao_esc(value): 
+    inner_dict = {
+        1: "Urbana",
+        2: "Rural",
+    }
+    return inner_dict[value]
+
+def replace_tp_sit_func_esc(value):
+    inner_dict ={
+        1 : "Em atividade",
+        2 : "Paralisada",
+        3 : "Extinta",
+        4 : "Escola extinta em anos anteriores",
+    }
+    return inner_dict[value]
+
+udf_replace_tp_dependencia_adm_esc = udf(lambda x: replace_tp_dependencia_adm_esc(x))
+udf_tp_localizacao_esc = udf(lambda x: replace_tp_localizacao_esc(x))
+udf_tp_sit_func_esc = udf(lambda x: replace_tp_sit_func_esc(x))
+
+df6 = (
+    df5
+    .withColumn(
+        "TP_DEPENDENCIA_ADM_ESC", 
+        udf_replace_tp_dependencia_adm_esc(
+            col("TP_DEPENDENCIA_ADM_ESC")
+        )
+    )
+    .withColumn(
+        "TP_LOCALIZACAO_ESC", 
+        udf_tp_localizacao_esc(
+            col("TP_LOCALIZACAO_ESC")
+        )
+    )
+    .withColumn(
+        "TP_SIT_FUNC_ESC", 
+        udf_tp_sit_func_esc(
+            col("TP_SIT_FUNC_ESC")
+        )
+    )
+)
+
+print(df6.show(5))
