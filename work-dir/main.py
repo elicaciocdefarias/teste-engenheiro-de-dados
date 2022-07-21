@@ -22,7 +22,7 @@ df = (
 )
 
 # colunas uteis
-columns = [
+colunas_uteis = [
     "NU_INSCRICAO",
     "TP_PRESENCA_CN",
     "TP_PRESENCA_CH",
@@ -33,9 +33,13 @@ columns = [
     "NU_NOTA_LC",
     "NU_NOTA_MT",
     "NU_NOTA_REDACAO",
+    "CO_MUNICIPIO_ESC",
+    "NO_MUNICIPIO_ESC",
+    "TP_DEPENDENCIA_ADM_ESC",
+    "TP_LOCALIZACAO_ESC",
+    "TP_SIT_FUNC_ESC",
+    "NU_ANO",
     "TP_SEXO",
     "TP_COR_RACA",
-    "NU_ANO"
 ]
-
-df1 = df.select(columns)
+df1 = df.select(colunas_uteis)
