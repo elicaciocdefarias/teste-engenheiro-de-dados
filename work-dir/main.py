@@ -17,6 +17,7 @@ df = (
     .option('Header', True)
     .option('inferSchema', True)
     .option("delimiter", ";")
+    .option("encoding", "ISO-8859-1")
     .csv('./work-dir/MICRODADOS_ENEM_2020.csv')
 )
 
