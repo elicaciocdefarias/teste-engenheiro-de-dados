@@ -120,7 +120,7 @@ udf_replace_tp_dependencia_adm_esc = udf(lambda x: replace_tp_dependencia_adm_es
 udf_tp_localizacao_esc = udf(lambda x: replace_tp_localizacao_esc(x))
 udf_tp_sit_func_esc = udf(lambda x: replace_tp_sit_func_esc(x))
 
-df_escola = (
+df6 = (
     df5
     .withColumn(
         "TP_DEPENDENCIA_ADM_ESC", 
@@ -142,7 +142,14 @@ df_escola = (
     )
 )
 
-print(df_escola.show(5))
+df_escola = (
+    df6
+    .withColumnRenamed("CO_MUNICIPIO_ESC", "CODIGO_MUNICIPIO")
+    .withColumnRenamed("NO_MUNICIPIO_ESC", "NOME_MUNICIPIO")
+    .withColumnRenamed("TP_DEPENDENCIA_ADM_ESC", "DEPENDENCIA")
+    .withColumnRenamed("TP_LOCALIZACAO_ESC", "LOCALIZACAO")
+    .withColumnRenamed("TP_SIT_FUNC_ESC", "SITUACAO")
+)
 
 #### alunos
 
@@ -206,7 +213,7 @@ def replace_tp_cor_raca(value):
 udf_replace_tp_sexo = udf(lambda x: replace_tp_sexo(x))
 udf_replace_tp_cor_raca = udf(lambda x: replace_tp_cor_raca(x))
 
-df_aluno = (
+df6 = (
     df5
     .withColumn(
         "TP_SEXO", 
@@ -222,7 +229,11 @@ df_aluno = (
     )
 )
 
-df_aluno.show(5)
+df_aluno = (
+    df6
+    .withColumnRenamed("TP_SEXO", "SEXO")
+    .withColumnRenamed("TP_COR_RACA", "ETNIA")
+)
 
 #### avaliacao
 
@@ -308,7 +319,9 @@ df_cn = (
         "TP_PRESENCA_CN",
         "NU_NOTA_CN",
     )
-    .withColumn("TIPO_AVALIACAO", lit("CN"))
+    .withColumn("TIPO", lit("CN"))
+    .withColumnRenamed("TP_PRESENCA_CN", "PRESENCA")
+    .withColumnRenamed("NU_NOTA_CN", "NOTA")
 )
 
 df_ch = (
@@ -317,7 +330,9 @@ df_ch = (
         "TP_PRESENCA_CH",
         "NU_NOTA_CH",
     )
-    .withColumn("TIPO_AVALIACAO", lit("CH"))
+    .withColumn("TIPO", lit("CH"))
+    .withColumnRenamed("TP_PRESENCA_CH", "PRESENCA")
+     .withColumnRenamed("NU_NOTA_CH", "NOTA")
 )
 
 df_lc = (
@@ -326,7 +341,9 @@ df_lc = (
         "TP_PRESENCA_LC",
         "NU_NOTA_LC",
     )
-    .withColumn("TIPO_AVALIACAO", lit("LC"))
+    .withColumn("TIPO", lit("LC"))
+    .withColumnRenamed("TP_PRESENCA_LC", "PRESENCA")
+    .withColumnRenamed("NU_NOTA_LC", "NOTA")
 )
 
 df_mt = (
@@ -335,7 +352,9 @@ df_mt = (
         "TP_PRESENCA_MT",
         "NU_NOTA_MT",
     )
-    .withColumn("TIPO_AVALIACAO", lit("MT"))
+    .withColumn("TIPO", lit("MT"))
+    .withColumnRenamed("TP_PRESENCA_MT", "PRESENCA")
+    .withColumnRenamed("NU_NOTA_MT", "NOTA")
 )
 
 df_rd = (
@@ -344,7 +363,9 @@ df_rd = (
         "TP_STATUS_REDACAO",
         "NU_NOTA_REDACAO",
     )
-    .withColumn("TIPO_AVALIACAO", lit("RD"))
+    .withColumn("TIPO", lit("RD"))
+    .withColumnRenamed("TP_STATUS_REDACAO", "PRESENCA")
+    .withColumnRenamed("NU_NOTA_REDACAO", "NOTA")
 )
 
 df_cn_ch = df_cn.union(df_ch)
@@ -361,8 +382,6 @@ df5 = df4.withColumn(
 df_avaliacao = df5.withColumn(
     "ID_AVALIACAO", df5.ID_AVALIACAO +1
 )
-
-df_avaliacao.show()
 
 #### join dataframes
 
@@ -381,4 +400,52 @@ join_2 = (
     )
 )
 
-join_2.show()
+#### separa os datasets para alimentar as tabelas
+
+colunas_escola = [
+    'ID_ESCOLA', 
+    'CODIGO_MUNICIPIO',
+    'NOME_MUNICIPIO',
+    'DEPENDENCIA',
+    'LOCALIZACAO',
+    'SITUACAO',
+]
+
+colunas_aluno = [
+    'ID_ALUNO',
+    'NU_INSCRICAO',  
+    'ETNIA',
+    'SEXO',
+]
+
+colunas_avaliacao = [
+    'ID_AVALIACAO',
+    'TIPO',
+    'NOTA',
+    'PRESENCA',
+    'ID_ALUNO',
+    'ID_ESCOLA',
+ ]
+
+df_dimensao_escola = (
+    join_2
+    .select(*colunas_escola)
+    .distinct()
+)
+
+df_dimensao_escola.show(5)
+
+df_dimensao_aluno = (
+    join_2
+    .select(*colunas_aluno)
+    .distinct()
+)
+
+df_dimensao_aluno.show(5)
+
+df_fato_avaliacao = (
+    join_2
+    .select(*colunas_avaliacao)
+)
+
+df_fato_avaliacao.show(5)
