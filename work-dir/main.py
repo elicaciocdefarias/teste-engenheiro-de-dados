@@ -119,7 +119,7 @@ udf_replace_tp_dependencia_adm_esc = udf(lambda x: replace_tp_dependencia_adm_es
 udf_tp_localizacao_esc = udf(lambda x: replace_tp_localizacao_esc(x))
 udf_tp_sit_func_esc = udf(lambda x: replace_tp_sit_func_esc(x))
 
-df6 = (
+df_escola = (
     df5
     .withColumn(
         "TP_DEPENDENCIA_ADM_ESC", 
@@ -141,4 +141,84 @@ df6 = (
     )
 )
 
-print(df6.show(5))
+print(df_escola.show(5))
+
+#### alunos
+
+# extrai as informacoes do aluno
+colunas = [
+    "NU_INSCRICAO",
+    "TP_SEXO",
+    "TP_COR_RACA",
+]
+
+df2 = df1.select(*colunas)
+
+# remove as linhas onde todas as informacoes da escola estao vazias
+# remove as linhas duplicadas
+# ordena pelo codigo do municipio
+# cria um novo dataframe
+colunas_aluno = [
+    "TP_SEXO",
+    "TP_COR_RACA",
+]
+
+df3 = (
+    df2
+    .dropna(
+        how="all", 
+        subset=colunas_aluno
+    )
+    .distinct()
+    .orderBy("NU_INSCRICAO")
+)
+
+# indexa as linhas
+df4 = df3.withColumn(
+    "ID", monotonically_increasing_id()
+)
+
+df5 = df4.withColumn(
+    "ID", df4.ID +1
+)
+
+# substitui os valor numericos pelas descricoes
+def replace_tp_sexo(value):
+    inner_dict = {
+        "M" : "Masculino",
+        "F" : "Feminino", 
+    }
+    return inner_dict[value]
+
+def replace_tp_cor_raca(value): 
+    inner_dict = {
+        0 : "Não declarado",
+        1 : "Branca",
+        2 : "Preta",
+        3 : "Parda",
+        4 : "Amarela",
+        5 : "Indígena ",
+
+    }
+    return inner_dict[value]
+
+udf_replace_tp_sexo = udf(lambda x: replace_tp_sexo(x))
+udf_replace_tp_cor_raca = udf(lambda x: replace_tp_cor_raca(x))
+
+df_aluno = (
+    df5
+    .withColumn(
+        "TP_SEXO", 
+        udf_replace_tp_sexo(
+            col("TP_SEXO")
+        )
+    )
+    .withColumn(
+        "TP_COR_RACA", 
+        udf_replace_tp_cor_raca(
+            col("TP_COR_RACA")
+        )
+    )
+)
+
+df_aluno.show(5)
