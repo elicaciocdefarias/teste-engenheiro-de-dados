@@ -83,11 +83,11 @@ df3 = (
 
 # indexa as linhas
 df4 = df3.withColumn(
-    "ID", monotonically_increasing_id()
+    "ID_ESCOLA", monotonically_increasing_id()
 )
 
 df5 = df4.withColumn(
-    "ID", df4.ID +1
+    "ID_ESCOLA", df4.ID_ESCOLA +1
 )
 
 # substitui os valor numericos pelas descricoes
@@ -176,11 +176,11 @@ df3 = (
 
 # indexa as linhas
 df4 = df3.withColumn(
-    "ID", monotonically_increasing_id()
+    "ID_ALUNO", monotonically_increasing_id()
 )
 
 df5 = df4.withColumn(
-    "ID", df4.ID +1
+    "ID_ALUNO", df4.ID_ALUNO +1
 )
 
 # substitui os valor numericos pelas descricoes
@@ -355,11 +355,30 @@ df4 = df4.orderBy("NU_INSCRICAO")
 
 # indexa as linhas
 df5 = df4.withColumn(
-    "ID", monotonically_increasing_id()
+    "ID_AVALIACAO", monotonically_increasing_id()
 )
 
 df_avaliacao = df5.withColumn(
-    "ID", df5.ID +1
+    "ID_AVALIACAO", df5.ID_AVALIACAO +1
 )
 
 df_avaliacao.show()
+
+#### join dataframes
+
+join_1 = (
+    df_escola
+    .join(
+        df_aluno,
+        ["NU_INSCRICAO"]
+    )
+)
+
+join_2 = (
+    join_1.join(
+        df_avaliacao,
+        ["NU_INSCRICAO"]
+    )
+)
+
+join_2.show()
