@@ -43,3 +43,15 @@ colunas_uteis = [
     "TP_COR_RACA",
 ]
 df1 = df.select(colunas_uteis)
+
+# extrai as informacoes da escola junto com o numero
+# de inscricao do aluno
+colunas = [
+    "CO_MUNICIPIO_ESC",
+    "NO_MUNICIPIO_ESC",
+    "TP_DEPENDENCIA_ADM_ESC",
+    "TP_LOCALIZACAO_ESC",
+    "TP_SIT_FUNC_ESC",
+    "NU_INSCRICAO",
+]
+df2 = df1.select(*colunas)
