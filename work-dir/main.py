@@ -389,14 +389,16 @@ join_1 = (
     df_escola
     .join(
         df_aluno,
-        ["NU_INSCRICAO"]
+        ["NU_INSCRICAO"],
+        "right"
     )
 )
 
 join_2 = (
     join_1.join(
         df_avaliacao,
-        ["NU_INSCRICAO"]
+        ["NU_INSCRICAO"],
+        "left"
     )
 )
 
