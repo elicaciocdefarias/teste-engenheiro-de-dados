@@ -484,10 +484,8 @@ df_fato_avaliacao.show(5)
 
 (
     spark.createDataFrame(
-        [
-            ('ID', 1),
-            ('ANO', 2020)
-        ]
+        [(1, 2020)],
+        schema="ID int, ANO int"
     )
     .write
     .format("jdbc")
