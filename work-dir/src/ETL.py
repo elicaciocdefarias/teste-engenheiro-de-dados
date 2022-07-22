@@ -4,12 +4,8 @@ from pyspark.sql.functions import col, udf, monotonically_increasing_id, lit
 
 ###############################################################################
 ###############################################################################
-# ### INICIO
+# ### 
 ###############################################################################
-###############################################################################
-
-###############################################################################
-# ### pega uma sessao do spark
 ###############################################################################
 spark = (
     SparkSession
@@ -21,9 +17,10 @@ spark = (
 )
 
 ###############################################################################
-# ### pega uma sessao do spark
 ###############################################################################
-# carrega os dados
+# ### 
+###############################################################################
+###############################################################################
 df = (
     spark
     .read
@@ -35,9 +32,10 @@ df = (
 )
 
 ###############################################################################
-# ### pega uma sessao do spark
 ###############################################################################
-# colunas uteis
+# ### 
+###############################################################################
+###############################################################################
 colunas_uteis = [
     "NU_INSCRICAO",
     "TP_PRESENCA_CN",
@@ -62,10 +60,10 @@ colunas_uteis = [
 df1 = df.select(colunas_uteis)
 
 ###############################################################################
-# ### pega uma sessao do spark
 ###############################################################################
-# extrai as informacoes da escola junto com o numero
-# de inscricao do aluno
+# ### escola
+###############################################################################
+###############################################################################
 colunas = [
     "CO_MUNICIPIO_ESC",
     "NO_MUNICIPIO_ESC",
@@ -74,16 +72,11 @@ colunas = [
     "TP_SIT_FUNC_ESC",
     "NU_INSCRICAO",
 ]
+
 df2 = df1.select(*colunas)
 
-###############################################################################
-# ### pega uma sessao do spark
-###############################################################################
-# remove as linhas onde todas as informacoes da escola estao vazias
-# remove as linhas duplicadas
-# ordena pelo codigo do municipio
-# cria um novo dataframe
-colunas_escola = [
+# split school values
+selected_columns = [
     "CO_MUNICIPIO_ESC",
     "NO_MUNICIPIO_ESC",
     "TP_DEPENDENCIA_ADM_ESC",
@@ -91,38 +84,45 @@ colunas_escola = [
     "TP_SIT_FUNC_ESC",   
 ]
 
-###############################################################################
-# ### pega uma sessao do spark
-###############################################################################
 df3 = (
     df2
-    .dropna(
-        how="all", 
-        subset=colunas_escola
-    )
+    .select(*selected_columns)
     .distinct()
     .orderBy("CO_MUNICIPIO_ESC")
 )
 
-###############################################################################
-# ### pega uma sessao do spark
-###############################################################################
-# indexa as linhas
-df4 = df3.withColumn(
-    "ID_ESCOLA", monotonically_increasing_id()
+# indexing dataframe
+df4 = (
+    df3
+    .withColumn(
+        "ID_ESCOLA", monotonically_increasing_id()
+    )
 )
 
-###############################################################################
-# ### pega uma sessao do spark
-###############################################################################
 df5 = df4.withColumn(
     "ID_ESCOLA", df4.ID_ESCOLA +1
 )
 
-###############################################################################
-# ### pega uma sessao do spark
-###############################################################################
-# substitui os valor numericos pelas descricoes
+# join dataframes
+df6 = (
+    df2
+    .join(
+        df5,
+        [
+            "CO_MUNICIPIO_ESC", 
+            "NO_MUNICIPIO_ESC", 
+            "TP_DEPENDENCIA_ADM_ESC", 
+            "TP_LOCALIZACAO_ESC", 
+            "TP_SIT_FUNC_ESC"
+        ],
+        "left"
+    )
+)
+
+# fillna ID_ESCOLA column
+df7 = df6.na.fill(1, subset=["ID_ESCOLA"])
+
+# replace attribute values
 def replace_tp_dependencia_adm_esc(value):
     inner_dict = {
         1 : "Federal",
@@ -130,14 +130,14 @@ def replace_tp_dependencia_adm_esc(value):
         3 : "Municipal",
         4 : "Privada",
     }
-    return inner_dict[value]
+    return inner_dict.get(value)
 
 def replace_tp_localizacao_esc(value): 
     inner_dict = {
         1: "Urbana",
         2: "Rural",
     }
-    return inner_dict[value]
+    return inner_dict.get(value)
 
 def replace_tp_sit_func_esc(value):
     inner_dict ={
@@ -146,14 +146,14 @@ def replace_tp_sit_func_esc(value):
         3 : "Extinta",
         4 : "Escola extinta em anos anteriores",
     }
-    return inner_dict[value]
+    return inner_dict.get(value)
 
 udf_replace_tp_dependencia_adm_esc = udf(lambda x: replace_tp_dependencia_adm_esc(x))
 udf_tp_localizacao_esc = udf(lambda x: replace_tp_localizacao_esc(x))
 udf_tp_sit_func_esc = udf(lambda x: replace_tp_sit_func_esc(x))
 
-df6 = (
-    df5
+df8 = (
+    df7
     .withColumn(
         "TP_DEPENDENCIA_ADM_ESC", 
         udf_replace_tp_dependencia_adm_esc(
@@ -174,11 +174,9 @@ df6 = (
     )
 )
 
-###############################################################################
-# ### pega uma sessao do spark
-###############################################################################
+# create school dataframe
 df_escola = (
-    df6
+    df8
     .withColumnRenamed("CO_MUNICIPIO_ESC", "CODIGO_MUNICIPIO")
     .withColumnRenamed("NO_MUNICIPIO_ESC", "NOME_MUNICIPIO")
     .withColumnRenamed("TP_DEPENDENCIA_ADM_ESC", "DEPENDENCIA")
@@ -188,16 +186,9 @@ df_escola = (
 
 ###############################################################################
 ###############################################################################
-# ### FIM
+# ###  alunos
 ###############################################################################
 ###############################################################################
-
-
-
-
-#### alunos
-
-# extrai as informacoes do aluno
 colunas = [
     "NU_INSCRICAO",
     "TP_SEXO",
@@ -206,41 +197,25 @@ colunas = [
 
 df2 = df1.select(*colunas)
 
-# remove as linhas onde todas as informacoes da escola estao vazias
-# remove as linhas duplicadas
-# ordena pelo codigo do municipio
-# cria um novo dataframe
-colunas_aluno = [
-    "TP_SEXO",
-    "TP_COR_RACA",
-]
-
-df3 = (
+df4 = (
     df2
-    .dropna(
-        how="all", 
-        subset=colunas_aluno
-    )
     .distinct()
     .orderBy("NU_INSCRICAO")
-)
-
-# indexa as linhas
-df4 = df3.withColumn(
-    "ID_ALUNO", monotonically_increasing_id()
+    .withColumn(
+        "ID_ALUNO", monotonically_increasing_id()
+    )
 )
 
 df5 = df4.withColumn(
     "ID_ALUNO", df4.ID_ALUNO +1
 )
 
-# substitui os valor numericos pelas descricoes
 def replace_tp_sexo(value):
     inner_dict = {
         "M" : "Masculino",
         "F" : "Feminino", 
     }
-    return inner_dict[value]
+    return inner_dict.get(value)
 
 def replace_tp_cor_raca(value): 
     inner_dict = {
@@ -252,7 +227,7 @@ def replace_tp_cor_raca(value):
         5 : "Indígena ",
 
     }
-    return inner_dict[value]
+    return inner_dict.get(value)
 
 udf_replace_tp_sexo = udf(lambda x: replace_tp_sexo(x))
 udf_replace_tp_cor_raca = udf(lambda x: replace_tp_cor_raca(x))
@@ -279,9 +254,11 @@ df_aluno = (
     .withColumnRenamed("TP_COR_RACA", "ETNIA")
 )
 
-#### avaliacao
-
-# extrai as informacoes das avaliacao
+###############################################################################
+###############################################################################
+# ###  avaliacao
+###############################################################################
+###############################################################################
 colunas = [
     "NU_INSCRICAO",
     "TP_PRESENCA_CN",
@@ -298,14 +275,13 @@ colunas = [
 
 df2 = df1.select(*colunas)
 
-# substitui os valor numericos pelas descricoes
 def replace_presenca_avaliacao(value):
     inner_dict = {
         0: "Faltou à prova",
         1: "Presente na prova",
         2: "Eliminado na prova",
     }
-    return inner_dict[value]
+    return inner_dict.get(value)
 
 def replace_presenca_redacao(value):
     inner_dict = {
@@ -318,7 +294,7 @@ def replace_presenca_redacao(value):
         8 : "Texto insuficiente",
         9 : "Parte desconectada",
     }
-    return inner_dict.get(value, "Não Informada")
+    return inner_dict.get(value)
 
 udf_replace_presenca_avaliacao = udf(lambda x: replace_presenca_avaliacao(x))
 udf_replace_presenca_redacao = udf(lambda x: replace_presenca_redacao(x))
@@ -418,7 +394,6 @@ df_cn_ch_lc_mt = df_cn_ch_lc.union(df_mt)
 df4 = df_cn_ch_lc_mt.union(df_rd)
 df4 = df4.orderBy("NU_INSCRICAO")
 
-# indexa as linhas
 df5 = df4.withColumn(
     "ID_AVALIACAO", monotonically_increasing_id()
 )
@@ -427,14 +402,16 @@ df_avaliacao = df5.withColumn(
     "ID_AVALIACAO", df5.ID_AVALIACAO +1
 )
 
-#### join dataframes
-
+###############################################################################
+###############################################################################
+# ###  join dataframes
+###############################################################################
+###############################################################################
 join_1 = (
     df_escola
     .join(
         df_aluno,
         ["NU_INSCRICAO"],
-        "right"
     )
 )
 
@@ -442,12 +419,14 @@ join_2 = (
     join_1.join(
         df_avaliacao,
         ["NU_INSCRICAO"],
-        "left"
     )
 )
 
-#### separa os datasets para alimentar as tabelas
-
+###############################################################################
+###############################################################################
+# ###  separa os datasets para alimentar as tabelas
+###############################################################################
+###############################################################################
 colunas_escola = [
     'ID_ESCOLA', 
     'CODIGO_MUNICIPIO',
@@ -497,10 +476,14 @@ df_fato_avaliacao = (
 
 df_fato_avaliacao.show(5)
 
-#### carrega os dados nas tabelas
+###############################################################################
+###############################################################################
+# ###  carrega os dados nas tabelas
+###############################################################################
+###############################################################################
+#### 
 (
     df_dimensao_escola
-    .dropna(how="all")
     .orderBy("ID_ESCOLA")
     .write
     .format("jdbc")
@@ -514,7 +497,6 @@ df_fato_avaliacao.show(5)
 
 (
     df_dimensao_aluno
-    .dropna(how="all")
     .orderBy("ID_ALUNO")
     .write
     .format("jdbc")
@@ -543,7 +525,6 @@ df_fato_avaliacao.show(5)
 
 (
     df_fato_avaliacao
-    .dropna(how="all")
     .orderBy("ID_AVALIACAO")
     .write
     .format("jdbc")
