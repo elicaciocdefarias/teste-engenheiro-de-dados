@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS dimensao_escola (
 
 CREATE TABLE IF NOT EXISTS dimensao_aluno (
     ID_ALUNO bigint NOT NULL AUTO_INCREMENT,
-    NU_INSCRICAO int, 
+    NU_INSCRICAO bigint, 
     ETNIA varchar(255),
     SEXO varchar(255),
     PRIMARY KEY (ID_ALUNO)
