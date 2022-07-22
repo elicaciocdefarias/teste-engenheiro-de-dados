@@ -35,7 +35,7 @@
 - pyspark
 - mysql-connector-python
 
-> Caso seja necessario instalar alguma biblioteca, use os camandos abaixo.
+> Caso seja necessário instalar alguma biblioteca, use os camandos abaixo.
 Lembrando que estes comandos devem ser executados no terminal do linux, caso use outro sistema operacional sinta-se a vontade para adapta-los.
 
 ```bash
@@ -115,5 +115,5 @@ docker-compose exec -it spark-master \
 
 6. Depois que todos os dados estiverem carregados, para conferir as resposta, abra o `Visual Studio Code` no diretorio do projeto, acesse a pasta `work-dir/notebooks` e abra o notebook `notebook_respostas`
 
-7. Agora click pra rodar todas as colunas.
+7. Agora click pra rodar todas as colunas e conferir o resultado.
 
