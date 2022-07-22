@@ -8,7 +8,7 @@ ENV PYSPARK_PYTHON python3
 
 USER root
 
-COPY ./work-dir/mysql-connector-java-8.0.29.jar /opt/spark/jars/
+COPY ./work-dir/jars/mysql-connector-java-8.0.29.jar /opt/spark/jars/
 
 RUN mkdir ${SPARK_HOME}/logs
 
