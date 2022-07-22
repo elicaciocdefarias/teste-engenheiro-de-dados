@@ -2,16 +2,27 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, udf, monotonically_increasing_id, lit
 
 
-# pega uma sessao do spark
+###############################################################################
+###############################################################################
+# ### INICIO
+###############################################################################
+###############################################################################
+
+###############################################################################
+# ### pega uma sessao do spark
+###############################################################################
 spark = (
     SparkSession
     .builder
     .appName('my spark cluster')
     .master('spark://spark-master:7077')
-    .config("spark.driver.extraClassPath", "./work-dir/mysql-connector-java-8.0.29.jar")
+    .config("spark.driver.extraClassPath", "./work-dir/jars/mysql-connector-java-8.0.29.jar")
     .getOrCreate()
 )
 
+###############################################################################
+# ### pega uma sessao do spark
+###############################################################################
 # carrega os dados
 df = (
     spark
@@ -20,9 +31,12 @@ df = (
     .option('inferSchema', True)
     .option("delimiter", ";")
     .option("encoding", "ISO-8859-1")
-    .csv('./work-dir/MICRODADOS_ENEM_2020.csv')
+    .csv('./work-dir/datasets/MICRODADOS_ENEM_2020.csv')
 )
 
+###############################################################################
+# ### pega uma sessao do spark
+###############################################################################
 # colunas uteis
 colunas_uteis = [
     "NU_INSCRICAO",
@@ -47,6 +61,9 @@ colunas_uteis = [
 ]
 df1 = df.select(colunas_uteis)
 
+###############################################################################
+# ### pega uma sessao do spark
+###############################################################################
 # extrai as informacoes da escola junto com o numero
 # de inscricao do aluno
 colunas = [
@@ -59,6 +76,9 @@ colunas = [
 ]
 df2 = df1.select(*colunas)
 
+###############################################################################
+# ### pega uma sessao do spark
+###############################################################################
 # remove as linhas onde todas as informacoes da escola estao vazias
 # remove as linhas duplicadas
 # ordena pelo codigo do municipio
@@ -71,6 +91,9 @@ colunas_escola = [
     "TP_SIT_FUNC_ESC",   
 ]
 
+###############################################################################
+# ### pega uma sessao do spark
+###############################################################################
 df3 = (
     df2
     .dropna(
@@ -81,15 +104,24 @@ df3 = (
     .orderBy("CO_MUNICIPIO_ESC")
 )
 
+###############################################################################
+# ### pega uma sessao do spark
+###############################################################################
 # indexa as linhas
 df4 = df3.withColumn(
     "ID_ESCOLA", monotonically_increasing_id()
 )
 
+###############################################################################
+# ### pega uma sessao do spark
+###############################################################################
 df5 = df4.withColumn(
     "ID_ESCOLA", df4.ID_ESCOLA +1
 )
 
+###############################################################################
+# ### pega uma sessao do spark
+###############################################################################
 # substitui os valor numericos pelas descricoes
 def replace_tp_dependencia_adm_esc(value):
     inner_dict = {
@@ -142,6 +174,9 @@ df6 = (
     )
 )
 
+###############################################################################
+# ### pega uma sessao do spark
+###############################################################################
 df_escola = (
     df6
     .withColumnRenamed("CO_MUNICIPIO_ESC", "CODIGO_MUNICIPIO")
@@ -150,6 +185,15 @@ df_escola = (
     .withColumnRenamed("TP_LOCALIZACAO_ESC", "LOCALIZACAO")
     .withColumnRenamed("TP_SIT_FUNC_ESC", "SITUACAO")
 )
+
+###############################################################################
+###############################################################################
+# ### FIM
+###############################################################################
+###############################################################################
+
+
+
 
 #### alunos
 
